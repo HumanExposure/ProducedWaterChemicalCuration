@@ -151,7 +151,7 @@ write.csv(newchemstocurate1,"uncurated_chemicals_fracfocus_07092024.csv")
 py_run_file("clean_chems_FF.py") #this requires reticulate as well as installation of a Python instance
 
 #read in cleaning script result MANUALLY CLEANED TWO INSTANCES OF "[[" or "]]" (messes up API call and couldn't quickly ID a regex soln)
-newchemstocurate<-read.csv("Input/cleaned_chemicals_for_curation-Jul-10-2024.csv") #intermediate file provided with code (in Input)
+newchemstocurate<-read.csv("Input/cleaned_chemicals_for_curation-Jul-10-2024.csv") #intermediate file provided at Zenodo (with Input)
 
 #we can now remove id and duplicates that arose from case harmonization
 newchemstocurate<-newchemstocurate[,c("raw_chem_name","raw_cas","chemical_name","casrn","casrn_comment","name_comment","cas_in_name")]
@@ -279,7 +279,7 @@ suggested_names<-suggested_names[!str_detect(suggested_names$suggestions,"[[:upp
 
 #Acceptance of suggested names were hand curated (could always be updated)
 
-suggested_names_curated<-read.csv("Output/suggested_names_curated.csv") # Intermediate file provided with code. In "Output".
+suggested_names_curated<-read.csv("Output/suggested_names_curated.csv") # Intermediate file provided at Zenodo. In "Output".
 
 suggested_names_curated<-suggested_names_curated[which(suggested_names_curated$acceptsuggestion==1),]
 
@@ -317,7 +317,7 @@ for (i in 1:length(unique_suggested_names)){
 saveRDS(curatedsuggestions,"Output/APIchemicalsuggestionresults.rds")
 }
 
-curatedsuggestions<-readRDS("Output/APIchemicalsuggestionresults.rds") # Intermediate file provided with code. In "Output".
+curatedsuggestions<-readRDS("Output/APIchemicalsuggestionresults.rds") # Intermediate file provided at Zenodo. In "Output".
 
 #pull out successfully curated suggestions
 
@@ -387,7 +387,7 @@ for (i in 1:length(uniqueCAS$CASRN)){
 saveRDS(curatedCAS,"Output/APICASresults.rds")
 }
 
-curatedCAS<-readRDS("Output/APICASresults.rds") # Intermediate file provided with code. In "Output".
+curatedCAS<-readRDS("Output/APICASresults.rds") # Intermediate file provided at Zenodo. In "Output".
 
 #pull out successfully curated suggestions
 
@@ -551,7 +551,7 @@ sevens<-k[which(k$QCLevel==7),]
 #write.csv(unique(k$raw_chem_name[k$QCLevel==7]),"Output/for_manual_drop_curation.csv")
 
 #read in hand curated data
-manualcurated<-read.csv("Output/for_manual_drop_curation_annotated.csv") # Intermediate file provided with code. In "Output".
+manualcurated<-read.csv("Output/for_manual_drop_curation_annotated.csv") # Intermediate file provided at Zenodo. In "Output".
 
 k$QCCategory<-k$QCLevel
 forsubmittal<-k[which(k$QCCategory!=1 & k$QCCategory!=3 & k$QCCategory!= -999),]
@@ -561,7 +561,6 @@ forsubmittal<-forsubmittal[order(forsubmittal$QCCategory),]
 j<-which(trimws(forsubmittal$suggested_name)!="")
 forsubmittal$clean_name[j]<-forsubmittal$suggested_name[j]
 forsubmittal$name_comment[j]<-paste0(forsubmittal$name_comment[j]," ","clean name is API suggested name")
-
 
 forsubmittal<-forsubmittal[,!colnames(forsubmittal) %in% c("suggested_name","cas_in_name","blockit","QCLevel"),]
 
@@ -643,7 +642,7 @@ final_curated_chemicals1<-rbind(ones2, threes2, curated2)
 #update the preferred names and CASRN  with data directly obtained from the CompTox Dashboard since some were missing in the manual
 #curation to DTXSID by the DSSTox team
 #read in CompTox Dashboard data for the unique DTXSIDs this includes presence on other dashboard lists of chemicals in produced water
-dash<-read.csv("Input/CCD-Batch-Search_2025-02-14_04_17_18.csv") #intermediate file provided with code
+dash<-read.csv("Input/CCD-Batch-Search_2025-02-14_04_17_18.csv") #intermediate file provided with Input at Zenodo
 
 #Calculate the number of chemicals not in existing lists
 countnew<-length(which(dash$EPAHFR=="-" & dash$EPAHFRTABLE2=="-" & dash$FRACFOCUS=="-" & dash$PRODWATER=="-"))
@@ -653,8 +652,13 @@ countnew<-length(which(dash$EPAHFR=="-" & dash$EPAHFRTABLE2=="-" & dash$FRACFOCU
 preferred<-dash[,c("INPUT", "DTXSID","PREFERRED_NAME","CASRN")]
 
 final_curated_chemicals1<-left_join(final_curated_chemicals1,preferred) # there are a few new DTXSIDs without names and CASRN in EPA's dashboard yet can be obtained from https://comptox.epa.gov/dashboard/
+final_curated_chemicals1$raw_chem_name<-trimws(final_curated_chemicals1$raw_chem_name)
 
 #Merge back in with the original list of chemicals (after the initial simple text clean up); this allows us to retain clean names and comments for all records on final file
+newchemstocurate$raw_chem_name<-trimws(newchemstocurate$raw_chem_name)
+newchemstocurate$raw_cas<-trimws(newchemstocurate$raw_cas)
+
+
 final_curated_chemicals<-left_join(newchemstocurate,unique(final_curated_chemicals1[,!colnames(final_curated_chemicals1) %in% c("clean_name","clean_casrn","name_comment","casrn_comment")]))
 
 #Final manual review of threes: things curated by CASRN but not by name - manually compared
@@ -675,10 +679,6 @@ final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="ben
 final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="oganophilic clay" &  final_curated_chemicals$PREFERRED_NAME=="2-(BROMOMETHYL)-1,3-DINITROBENZENE")]<-""
 final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="organophilic clay" &  final_curated_chemicals$PREFERRED_NAME=="2-(BROMOMETHYL)-1,3-DINITROBENZENE")]<-""
 final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="phenol-formaldehyde resin" &  final_curated_chemicals$PREFERRED_NAME=="4-Methyl-3,4-dihydro-2H-pyrrole-5-carbonitrile")]<-""
-final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="2, 7-naphthalenedisulfonic acid, 3-hydroxy-4-[ (4-sulfor-1-naphthalenyl) azo]-, trisodium salt" &  final_curated_chemicals$PREFERRED_NAME=="Amaranth")]<-""
-final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="2, 7-napthalenedisulfonic acid, 3-hydroxy-4-[ (4-sulfor-1-napthalenyl) azol-, trisodium salt" &  final_curated_chemicals$PREFERRED_NAME=="Amaranth")]<-""
-final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="2, 7-naphthalenedisulfonic acid, 3-hydroxy-4-(4-sulfor-1-naphthalenyl) azo-, trisodium salt" &  final_curated_chemicals$PREFERRED_NAME=="Amaranth")]<-""
-final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="2, 7-napthalenedisulfonic acid, 3-hydroxy-4-(4-sulfor-1-napthalenyl) azol-, trisodium salt" &  final_curated_chemicals$PREFERRED_NAME=="Amaranth")]<-""
 final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="quaternary ammonium compounds, benzyl-c12-c18-alkyldimethyl, chlorides" &  final_curated_chemicals$PREFERRED_NAME=="Naltrexone methobromide")]<-""
 final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="solvent naptha (petroleum), heavy arom." &  final_curated_chemicals$PREFERRED_NAME=="2-Acetyl-3-[(difluoroboranyl)oxy]-5alpha-androst-2-en-17beta-yl acetate")]<-""
 final_curated_chemicals$DTXSID[which(final_curated_chemicals$raw_chem_name=="polyoxyethelenedimethylliminioethylenedimethylliminioethylenedichloride" &  final_curated_chemicals$PREFERRED_NAME=="O-[4-Hydroxy-3-(2-methylpropyl)phenyl]-3,5-diiodotyrosine")]<-""

@@ -114,7 +114,7 @@ final_curated_chemicals$raw_cas<-tolower(trimws(final_curated_chemicals$raw_cas)
 final_curated_chemicals<-final_curated_chemicals[,c("raw_chem_name","raw_cas","clean_name","name_comment","clean_casrn","casrn_comment","DTXSID","PREFERRED_NAME","CASRN")] #there were about a dozen duplicates that may had had to do wtih spaces in casrn
 
 final_curated_chemicals<-unique(final_curated_chemicals) #there were about a dozen duplicates that may had had to do with spaces in casrn
-final_curated_chemicals$DTXSID[which(is.na(final_curated_chemicals$DTXSID))]<-"unknown" #this is so w can QA which pairs have no match
+#final_curated_chemicals$DTXSID[which(is.na(final_curated_chemicals$DTXSID))]<-"unknown" #this is so w can QA which pairs have no match
 
 ingredients_withfunction$raw_cas<-ingredients_withfunction$CASNumber
 
@@ -155,8 +155,8 @@ ingredients_withfunction$raw_chem_name<-gsub("//*","", ingredients_withfunction$
 #do again, just to make sure catching any spaces introduced by above
 ingredients_withfunction$raw_chem_name<-trimws(tolower(ingredients_withfunction$raw_chem_name))
 
-#remove records missing both name and cas in raw FF data (~66K records)
-ingredients_withfunction2<-ingredients_withfunction[which(!is.na(ingredients_withfunction$raw_cas) & !is.na(ingredients_withfunction$raw_chem_name)),]
+#remove records missing both name and cas in raw FF data (~9K records)
+ingredients_withfunction2<-ingredients_withfunction[which(!is.na(ingredients_withfunction$raw_cas) | !is.na(ingredients_withfunction$raw_chem_name)),]
 
 #tester<-ingredients_withfunction[which(is.na(ingredients_withfunction$raw_cas) & is.na(ingredients_withfunction$raw_chem_name)),]
 
